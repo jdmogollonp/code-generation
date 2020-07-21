@@ -34,7 +34,7 @@ class Generator(object):
         declaracion = ''.join(declaracion)
         python_funcion = """def f("""+ declaracion +"""):\n\t return """+operacion+ """ #<end>"""
         return(python_funcion)
-    s
+        
     def generate_training_set(self,size):
         self.training_set = {self.function_generator():1 for i in range(0,size)}
         self.list_training_set = list(self.training_set.keys())
