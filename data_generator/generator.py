@@ -66,8 +66,13 @@ class Generator(object):
     def export_to_csv(self, file_name, df):
         return df.to_csv(str(file_name)+ '.csv', sep=';' , index=False, header=False)
     
-    def export_to_py(self, file_name, data):
-        file_name = file_name + '.py'
-        with open(file_name, 'w') as f:
-            f.write('data = [{}]'.format(data))        
-        return str(file_name)+ ' exported' ''                
+    
+    def export_file(self, path, extension, file_name,data):
+        if extension == '.csv':
+            return data.to_csv(str(file_name)+ '.csv', sep=',' , index=False, header=False)
+        elif extension == '.py':
+            file_name = path+file_name+'.py'
+            with open(file_name, 'w') as f:
+                f.write(data)        
+            return str(file_name)+ ' exported' ''                
+    
