@@ -1,4 +1,4 @@
-from tester import Tester
+from .tester import Tester
 
 class Environment(object):
     def __init__(self, initial_state, int2char, func_name, num_params, test_cases_csv, 
