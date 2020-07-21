@@ -48,15 +48,15 @@ class Pretrainer(object):
         self.dataset = self.dataset.shuffle(self.BUFFER_SIZE).batch(self.BATCH_SIZE, drop_remainder=True)
     
     
-    def build_model(self, vocab_size, embedding_dim, rnn_units, batch_size):
+    def build_model(self):
         model = tf.keras.Sequential([
-            tf.keras.layers.Embedding(vocab_size, embedding_dim,
-                                    batch_input_shape=[batch_size, None]),
-            tf.keras.layers.GRU(rnn_units,
+            tf.keras.layers.Embedding(len(self.vocab), self.embedding_dim,
+                                    batch_input_shape=[self.BATCH_SIZE, None]),
+            tf.keras.layers.GRU(self.rnn_units,
                                 return_sequences=True,
                                 stateful=True,
                                 recurrent_initializer='glorot_uniform'),
-            tf.keras.layers.Dense(vocab_size)
+            tf.keras.layers.Dense(len(self.vocab))
         ])
         return model
 
@@ -66,11 +66,7 @@ class Pretrainer(object):
         self.prepare_data()
 
         # Build model
-        model = self.build_model(
-            vocab_size = len(self.vocab),
-            embedding_dim=self.embedding_dim,
-            rnn_units=self.rnn_units,
-            batch_size=self.BATCH_SIZE)
+        model = self.build_model()
 
         def loss(labels, logits):
             return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)

@@ -4,9 +4,9 @@ import numpy as np
 import tensorflow as tf
 
 class DDRQNAgent(object):
-    def __init__(self, int2char, environment, checkpoint_dir, embedding_dim, rnn_units, output_file, batch_size=32, 
+    def __init__(self, vocab_size, environment, checkpoint_dir, embedding_dim, rnn_units, output_file, batch_size=32, 
                 temperature=1.0, render=False, memory_limit=20000, gamma=0.99, learning_rate=0.001, epsilon=0.2, 
-                epsilon_min=0.01, epsilon_decay=0.95, episodes=1000):
+                epsilon_min=0.01, epsilon_decay=0.95, episodes=10000):
         self.env = environment
         self.episodes = episodes
         self.temperature = temperature
@@ -25,7 +25,7 @@ class DDRQNAgent(object):
         self.target_network = self.create_network()
         self.target_network.set_weights(self.train_network.get_weights())
         
-        self.int2char = int2char
+        self.vocab_size = vocab_size
         self.output_file = output_file
         self.batch_size = batch_size
         self.checkpoint_dir = checkpoint_dir
@@ -38,13 +38,13 @@ class DDRQNAgent(object):
     
     def build_model(self):
         model = tf.keras.Sequential([
-            tf.keras.layers.Embedding(len(self.int2char), self.embedding_dim,
+            tf.keras.layers.Embedding(len(self.vocab_size), self.embedding_dim,
                                     batch_input_shape=[self.batch_size, None]),
             tf.keras.layers.GRU(self.rnn_units,
-                                return_sequences=True,
+                                return_sequences=False,
                                 stateful=False,
                                 recurrent_initializer='glorot_uniform'),
-            tf.keras.layers.Dense(len(self.int2char))
+            tf.keras.layers.Dense(len(self.vocab_size))
         ])
         return model
 
@@ -60,7 +60,7 @@ class DDRQNAgent(object):
 
     def choose_action(self, state):
         if np.random.rand() <= self.epsilon:
-            return random.randint(0, len(self.int2char))
+            return random.randint(0, len(self.vocab_size))
         else:
             predictions = self.train_network(state)
             # remove the batch dimension
@@ -68,7 +68,7 @@ class DDRQNAgent(object):
 
             # using a categorical distribution to predict the character returned by the model
             predictions = predictions / self.temperature
-            predicted_id = tf.random.categorical(predictions, num_samples=1)[-1,0].numpy()
+            predicted_id = tf.random.categorical(predictions, num_samples=1).numpy()
             return predicted_id
     
 
@@ -111,18 +111,16 @@ class DDRQNAgent(object):
             while True:
                 action = self.choose_action(state)
 
-                next_state, reward, done, _ = self.env.step(action)
-                
-                if self.render:
-                    self.env.render()
+                next_state, reward, done = self.env.step(action)
                 
                 self.remember(state, action, next_state, reward, done)
                 self.replay()                
                 
                 if done:
+                    self.env.render()
                     break
                 
-                # Updats data at the end of the loop
+                # Updates data at the end of the loop
                 state = next_state         
 
             # Update epsilon for increase correct step probabilities
@@ -133,5 +131,6 @@ class DDRQNAgent(object):
             if self.env.succeed():
                 print('Something magic just happened')
                 self.env.save(self.output_file)
+                break
 
             self.target_network.set_weights(self.train_network.get_weights())
