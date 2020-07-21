@@ -34,7 +34,7 @@ class Generator(object):
         declaracion = ''.join(declaracion)
         python_funcion = """def f("""+ declaracion +"""):\n\t return """+operacion+ """ #<end>"""
         return(python_funcion)
-        
+
     def generate_training_set(self,size):
         self.training_set = {self.function_generator():1 for i in range(0,size)}
         self.list_training_set = list(self.training_set.keys())
@@ -46,7 +46,7 @@ class Generator(object):
         self.test_set = {key:1  for key in test_set.keys() if key not in  self.training_set.keys() }
         list_keys = list(self.test_set.keys())
         self.test_cases = { 'test_cases ' + j :  pd.concat([self.generate_test_case(j) for i in range(0,cases_set_size)])  for  j in   list_keys}
-        for i, key in enumerate(x.test_cases):
+        for i, key in enumerate(self.test_cases):
             self.export_file( self.path,'.csv','test_cases_' + str(i), self.test_cases[key] )
         self.list_testing_set = list(self.test_set.keys())
         return self.list_testing_set
