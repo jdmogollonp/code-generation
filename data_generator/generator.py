@@ -6,10 +6,9 @@ import re
 import random
 import pandas as pd
 
-class Generator(object):
+class generator:
     def __init__(self):
         seed(90)
-    
 
     def function_generator(self):
         # letras
@@ -33,23 +32,25 @@ class Generator(object):
         distintos_letras = list(set(letras))
         declaracion = [x for x in chain(*zip_longest(distintos_letras, [',' for i in range( 0,len(distintos_letras)-1 )])) if x is not None]
         declaracion = ''.join(declaracion)
-
         python_funcion = """def f("""+ declaracion +"""):\n\treturn """+operacion+ """ #<end>"""
         return(python_funcion)
     
-
-    def generate_training_set(self, size):
+    def generate_training_set(self,size):
         self.training_set = {self.function_generator():1 for i in range(0,size)}
-        return list(self.training_set.keys())
-    
-
-    def generate_test_set(self, size):
-        test_set = {self.function_generator():1 for i in range(0,size)}
+        self.list_training_set = list(self.training_set.keys())
+        return self.list_training_set
+        
+    def generate_test_set(self,set_size,cases_set_size):
+        test_set = {self.function_generator():1 for i in range(0,set_size)}
         self.test_set = {key:1  for key in test_set.keys() if key not in  self.training_set.keys() }
-        return list(self.test_set.keys())
+        list_keys = list(self.test_set.keys())
+        self.test_cases = { 'test_cases ' + j :  pd.concat([self.generate_test_case(j) for i in range(0,cases_set_size)])  for  j in   list_keys}
+        for i, key in enumerate(x.test_cases):
+            self.export_to_csv( 'test function ' + str(i), self.test_cases[key] )
+        self.list_test_set = list(self.test_set.keys())
+        return self.list_test_set
     
-
-    def generate_test_case(self, function_str):
+    def generate_test_case(self,function_str):
         function = (function_str.split('def'))[1].split(':')[0]
         operation = (function_str.split('return'))[1].split('#')[0]
         variables = re.findall(r'\(([^()]+)\)', function)
@@ -62,11 +63,11 @@ class Generator(object):
         df_result.reset_index(drop=True, inplace = True)
         return df_result
     
-
-    def cases_to_csv(self, function_str, size):
-        cases_list =[self.generate_test_case(function_str) for i in range(0,size)] 
-        cases_list = pd.concat(cases_list)
-        cases_list.reset_index(drop=True, inplace= True)
-        self.cases_list = cases_list
-        return cases_list.to_csv('cases_list.csv',   sep=',',index=False, header=False)
-        
+    def export_to_csv(self, file_name, df):
+        return df.to_csv(str(file_name)+ '.csv', sep=';' , index=False, header=False)
+    
+    def export_to_py(self, file_name, data):
+        file_name = file_name + '.py'
+        with open(file_name, 'w') as f:
+            f.write('data = [{}]'.format(data))        
+        return str(file_name)+ ' exported' ''                
