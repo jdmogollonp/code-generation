@@ -2,11 +2,12 @@ from tester import Tester
 
 class Environment(object):
     def __init__(self, initial_state, int2char, func_name, num_params, test_cases_csv, 
-                csv_sep=',', header=None, error_ignore=True):
+                max_seq_length, csv_sep=',', header=None, error_ignore=True):
         self.initial_state = initial_state
         self.state = initial_state
         self.tester = Tester(func_name, num_params, test_cases_csv, csv_sep, header, error_ignore)
         self.int2char = int2char
+        self.max_seq_length = max_seq_length
 
 
     def reset(self):
@@ -17,7 +18,7 @@ class Environment(object):
     def done(self):
         if self.state < 5:
             return False
-        return ''.join([self.int2char[i] for i in self.state[-5:]]) == '<end>'
+        return len(self.state) > self.max_seq_length or ''.join([self.int2char[i] for i in self.state[-5:]]) == '<end>'
 
 
     def state_to_code(self):
@@ -31,9 +32,8 @@ class Environment(object):
 
 
     def step(self, action):
-        prev_state = self.state.copy()
         self.state.append(action)
-        return prev_state, self.state, self.reward(), self.done()
+        return self.state, self.reward(), self.done()
     
 
     def succeed(self):
