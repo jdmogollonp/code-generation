@@ -6,7 +6,7 @@ import re
 import random
 import pandas as pd
 
-class generator:
+class Generator(object):
     def __init__(self):
         seed(90)
 
@@ -46,7 +46,7 @@ class generator:
         list_keys = list(self.test_set.keys())
         self.test_cases = { 'test_cases ' + j :  pd.concat([self.generate_test_case(j) for i in range(0,cases_set_size)])  for  j in   list_keys}
         for i, key in enumerate(x.test_cases):
-            self.export_to_csv( 'test function ' + str(i), self.test_cases[key] )
+            self.export_to_csv( 'test_cases_' + str(i), self.test_cases[key] )
         self.list_test_set = list(self.test_set.keys())
         return self.list_test_set
     
