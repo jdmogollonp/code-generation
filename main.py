@@ -6,10 +6,14 @@ from drqn_agent.ddrqn_agent import DDRQNAgent
 # Generate data
 generator = Generator()
 # TODO: ...
+
 generator.generate_training_set(1000)
-generator.generate_test_set(10,100)
-generator.export_to_py('test_set',generator.list_test_set)
-generator.export_to_py('training_set',generator.list_training_set)
+generator.generate_test_set('C:/Users/Juan Mogollon/Desktop/ML/Proyecto/',10,100)
+
+for i in range(0,len(generator.list_testing_set)):
+    generator.export_file('C:/Users/Juan Mogollon/Desktop/ML/Proyecto/','.py','testing_function_'+ str(i),generator.list_testing_set[i])
+
+generator.export_file('C:/Users/Juan Mogollon/Desktop/ML/Proyecto/','.py','training_set',  '\n '.join( generator.list_training_set) )
 
 # Pre-train the model
 pretrainer = Pretrainer('./data', '/Users/miller/Desktop/training_checkpoints')
