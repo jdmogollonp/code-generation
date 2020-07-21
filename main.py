@@ -23,4 +23,4 @@ pretrainer.train()
 env = Environment('def f(a)', pretrainer.idx2char, 'f', 1, 'test_cases_1.csv', pretrainer.seq_length)
 agent = DDRQNAgent(len(pretrainer.vocab), env, pretrainer.checkpoint_dir, 
                     pretrainer.embedding_dim, pretrainer.rnn_units, 'output/result.py')
-agent.start()
+agent.start() 
