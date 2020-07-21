@@ -13,7 +13,7 @@ generator.generate_test_set('C:/Users/Juan Mogollon/Desktop/ML/Proyecto/',10,100
 for i in range(0,len(generator.list_testing_set)):
     generator.export_file('C:/Users/Juan Mogollon/Desktop/ML/Proyecto/','.py','testing_function_'+ str(i),generator.list_testing_set[i])
 
-generator.export_file('C:/Users/Juan Mogollon/Desktop/ML/Proyecto/','.py','training_set',  '\n '.join( generator.list_training_set) )
+generator.export_file('C:/Users/Juan Mogollon/Desktop/ML/Proyecto/','.py','training_set',  '\n'.join( generator.list_training_set) )
 
 # Pre-train the model
 pretrainer = Pretrainer('./data', '/Users/miller/Desktop/training_checkpoints')
