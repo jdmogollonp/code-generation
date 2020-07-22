@@ -12,15 +12,19 @@ class Tester(object):
     def is_valid(self, code):
         try:
             ast.parse(code)
+            self.test(code, once=True)
         except SyntaxError:
             return False
         return True
 
 
-    def test(self, code):
+    def test(self, code, once=False):
         exec(code)
         total, passed = 0., 0.
+        first = True
         for _, row in self.test_cases.iterrows():
+            if once and not first:
+                break
             if len(row) != self.num_params + 1:
                 if self.error_ignore:
                     continue
@@ -33,8 +37,10 @@ class Tester(object):
                 else:
                     s += str(row[self.test_cases.columns[i]]) + ', '
             s = s[:-2] + ')'
-            print(s)
             if eval(s) == row[self.test_cases.columns[-1]]:
                 passed += 1.
             total += 1.
+
+            if first:
+                first = False
         return passed/total
