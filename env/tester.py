@@ -13,7 +13,7 @@ class Tester(object):
         try:
             ast.parse(code)
             self.test(code, once=True)
-        except SyntaxError:
+        except:
             return False
         return True
 
