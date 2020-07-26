@@ -4,6 +4,8 @@ import numpy as np
 import os
 import time
 
+from ..env.tester import Tester
+
 class Pretrainer(object):
 
     def __init__(self, training_folder, checkpoint_dir, seq_length=100, files_extension='.py', embedding_dim=256,
@@ -17,7 +19,6 @@ class Pretrainer(object):
         self.BATCH_SIZE = BATCH_SIZE
         self.BUFFER_SIZE = BUFFER_SIZE
         self.EPOCHS = EPOCHS
-
 
     def prepare_data(self):
         # Read the training files
@@ -50,10 +51,10 @@ class Pretrainer(object):
         self.dataset = self.dataset.shuffle(self.BUFFER_SIZE).batch(self.BATCH_SIZE, drop_remainder=True)
     
     
-    def build_model(self):
+    def build_model(self, batch_size=1):
         model = tf.keras.Sequential([
             tf.keras.layers.Embedding(len(self.vocab) + 1, self.embedding_dim,
-                                    mask_zero=True, batch_input_shape=[self.BATCH_SIZE, None]),
+                                    mask_zero=True, batch_input_shape=[batch_size, None]),
             tf.keras.layers.GRU(self.rnn_units,
                                 return_sequences=True,
                                 stateful=True,
@@ -68,7 +69,7 @@ class Pretrainer(object):
         self.prepare_data()
 
         # Build model
-        model = self.build_model()
+        model = self.build_model(batch_size=self.BATCH_SIZE)
 
         def loss(labels, logits):
             return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
@@ -89,3 +90,57 @@ class Pretrainer(object):
         )
 
         model.fit(self.dataset, epochs=self.EPOCHS, callbacks=[checkpoint_callback])
+
+
+    # Low temperatures results in more predictable text.
+    # Higher temperatures results in more surprising text.
+    # Experiment to find the best setting.
+    def generate_code(self, start_string, temperature=1.0):
+        # Load the model
+        model = self.build_model(batch_size=1)
+
+        model.load_weights(tf.train.latest_checkpoint(self.checkpoint_dir))
+
+        model.build(tf.TensorShape([1, None]))
+
+        # Number of characters to generate
+        num_generate = 100
+        
+        # Converting our start string to numbers (vectorizing)
+        input_eval = [self.char2idx[s] for s in start_string]
+        input_eval = tf.expand_dims(input_eval, 0)
+
+        # Empty string to store our results
+        text_generated = [s for s in start_string]
+
+        
+
+        # Here batch size == 1
+        model.reset_states()
+        state = ''
+        while state != '<end>' and len(text_generated) < num_generate:
+            predictions = model(input_eval)
+            # remove the batch dimension
+            predictions = tf.squeeze(predictions, 0)
+
+            # using a categorical distribution to predict the character returned by the model
+            predictions = predictions / temperature
+            predicted_id = tf.random.categorical(predictions, num_samples=1)[-1,0].numpy()
+
+            # We pass the predicted character as the next input to the model
+            # along with the previous hidden state
+            input_eval = tf.expand_dims([predicted_id], 0)
+
+            text_generated.append(self.idx2char[predicted_id])
+            state += self.idx2char[predicted_id]
+            if len(state) > 5:
+                state = state[1:]
+
+
+        return ''.join(text_generated)
+
+
+    def eval(self, num_to_eval, start_string, temperature):
+        return float([Tester('', '', '').is_parsable(self.generate_code(start_string, temperature)) for _ in range(num_to_eval)].count(True))/float(num_to_eval)
+        
+    
