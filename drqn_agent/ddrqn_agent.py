@@ -7,7 +7,7 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 class DDRQNAgent(object):
     def __init__(self, vocab_size, environment, checkpoint_dir, embedding_dim, rnn_units, output_file, batch_size=32, 
                 temperature=1.0, render=False, memory_limit=20000, gamma=0.99, learning_rate=0.001, epsilon=0.01, 
-                epsilon_min=0.01, epsilon_decay=0.95, episodes=10000):
+                epsilon_min=0.01, epsilon_decay=0.90, episodes=10000, pre_fill_memory=10000):
         self.env = environment
         self.episodes = episodes
         self.temperature = temperature
@@ -32,6 +32,8 @@ class DDRQNAgent(object):
 
         self.target_network = self.create_network()
         self.target_network.set_weights(self.train_network.get_weights())
+
+        self.pre_fill_memory = pre_fill_memory
         
         # Render enviroment
         self.render = render
@@ -63,7 +65,7 @@ class DDRQNAgent(object):
     
 
     def choose_action(self, state):
-        if np.random.rand() <= self.epsilon:
+        if np.random.rand() <= self.epsilon and len(self.memory) > self.pre_fill_memory:
             return np.random.randint(self.vocab_size)
         else:
             predictions = self.train_network.predict(tf.expand_dims(state, 0), batch_size=1)
@@ -119,16 +121,19 @@ class DDRQNAgent(object):
     def start(self):
         for e in range(self.episodes):
             state = self.env.reset()
-            
+            cum_reward = 0
             while True:
                 action = self.choose_action(state)
                 next_state, reward, done = self.env.step(action)
-                
+                cum_reward += reward
                 self.remember(state, action, next_state, reward, done)
-                self.replay()                
+                if len(self.memory) > self.pre_fill_memory:
+                    self.replay()                
                 
                 if done:
                     print(f'Episode {e}:')
+                    print(f'\t- Pre fill is {"" if (len(self.memory) > self.pre_fill_memory) else "not "}completed ({len(self.memory)}/{self.pre_fill_memory})')
+                    print(f'\t- Cumulative Reward: {cum_reward}')
                     self.env.render()
                     print('------------------')
                     break

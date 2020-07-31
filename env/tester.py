@@ -7,15 +7,7 @@ class Tester(object):
         self.func_name = func_name
         self.num_params = num_params
         self.test_cases = pd.read_csv(test_cases_csv, sep=csv_sep, header=header)
-
-
-    def is_parsable(self, code):
-        try:
-            ast.parse(code)
-        except:
-            return False
-        return True
-
+    
 
     def is_valid(self, code):
         try:

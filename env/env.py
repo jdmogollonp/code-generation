@@ -26,7 +26,9 @@ class Environment(object):
 
 
     def reward(self):
-        if not self.done() or not self.tester.is_valid(self.state_to_code()):
+        if not self.done():
+            return 0
+        if not self.tester.is_valid(self.state_to_code()):
             return -1
         print('To test:')
         print(self.state_to_code())
